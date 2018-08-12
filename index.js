@@ -1,8 +1,12 @@
 const express = require('express')
 var bodyParser = require('body-parser')
+var morgan = require('morgan')
+const cors = require('cors')
 const app = express()
 
 app.use(bodyParser.json())
+app.use(morgan('tiny'))
+app.use(cors())
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
