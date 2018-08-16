@@ -9,6 +9,16 @@ app.use(morgan('tiny'))
 app.use(cors())
 app.use(express.static('build'))
 
+const Person = require('./models/person')
+
+const formatPerson = (person) => {
+    return {
+        name: person.name,
+        number: person.number,
+        id: person._id
+    }
+}
+
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
 })
@@ -16,52 +26,58 @@ app.get('/', (req, res) => {
 app.get('/info', (req, res) => {
     const info = `<p>puhelinluettelossa on ${people.length} henkilön tiedot </p> 
     ${new Date().toJSON()}`
-    
+
     res.send(info)
 })
 
 app.get('/api/people', (req, res) => {
-    res.json(people)
+    Person
+        .find({})
+        .then(people => {
+            res.json(people.map(formatPerson))
+        })
 })
 
 app.get('/api/people/:id', (req, res) => {
     const id = Number(req.params.id)
-    const person = people.find(person => person.id === id)
-    if (person) {
-        res.json(person)
-    }
-    else {
-        res.status(404).end()
-    }
+    const person =
+        Person
+            .findById(req.params.id)
+            .then(p => {
+                res.json(formatPerson(p))
+            })
 })
 
 app.post('/api/people', (req, res) => {
     const body = req.body
     if (body.name === undefined) {
-        return res.status(400).json({error: 'name is missing'})
+        return res.status(400).json({ error: 'name is missing' })
     }
 
     if (body.number === undefined) {
-        return res.status(400).json({error: 'number is missing'})
+        return res.status(400).json({ error: 'number is missing' })
     }
 
     if (people.find(person => person.name === body.name) !== undefined) {
-        return res.status(400).json({error: 'name must be unique'})
+        return res.status(400).json({ error: 'name must be unique' })
     }
-    
-    const person = {
+
+    const person = new Person({
         name: body.name,
         number: body.number,
         id: generateId()
-    }
+    })
     console.log(person)
-    people = people.concat(person)
-    res.json(person)
+    person
+        .save()
+        .then(savedPerson => {
+            res.json(formatPerson(savedPerson))
+        })
 })
 
 app.delete('/api/people/:id', (req, res) => {
     const id = Number(req.params.id)
-    people = people.filter(person => person.id != id)
+    Person.findById(id).remove()
     res.status(204).end()
 })
 
