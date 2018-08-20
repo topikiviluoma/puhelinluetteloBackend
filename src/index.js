@@ -35,6 +35,8 @@ app.get('/api/people', (req, res) => {
         .find({})
         .then(people => {
             res.json(people.map(formatPerson))
+        }).catch(error => {
+            console.log(error)
         })
 })
 
@@ -45,6 +47,8 @@ app.get('/api/people/:id', (req, res) => {
             .findById(req.params.id)
             .then(p => {
                 res.json(formatPerson(p))
+            }).catch(error => {
+                console.log(error)
             })
 })
 
@@ -72,13 +76,36 @@ app.post('/api/people', (req, res) => {
         .save()
         .then(savedPerson => {
             res.json(formatPerson(savedPerson))
+        }).catch(error => {
+            console.log(error)
         })
 })
 
 app.delete('/api/people/:id', (req, res) => {
-    const id = Number(req.params.id)
+    const id = req.params.id
     Person.findById(id).remove()
+        .catch(error => {
+            console.log(error)
+        })
     res.status(204).end()
+})
+
+
+app.put('/api/people/:id', (req, res) => {
+    const person = {
+        name: req.body.name,
+        number: req.body.number
+    }
+    const id = req.params.id
+    Person.findByIdAndUpdate(id, person, { new: true })
+        .then(updatedPerson => {
+            res.json(formatPerson(updatedPerson))
+        })
+        .catch(error => {
+            console.log(error)
+            res.status(400).send({ error: 'malformed id' })
+        })
+       
 })
 
 
